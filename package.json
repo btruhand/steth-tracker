@@ -1,0 +1,20 @@
+{
+  "name": "steth-tracker",
+  "version": "0.0.1",
+  "description": "Simple serverless application to track stETH rebalancing",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cryptocurrency",
+    "ethereum",
+    "serverless",
+    "aws"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "serverless": "^2.44.0"
+  }
+}
