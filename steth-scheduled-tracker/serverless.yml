@@ -11,13 +11,21 @@ provider:
   lambdaHashingVersion: 20201221
 
 functions:
-  rateHandler:
+  stethScheduledTracker:
     handler: handler.run
     events:
-      # Invoke Lambda function every minute
-      - schedule: rate(1 minute)
-  cronHandler:
-    handler: handler.run
-    events:
-      # Invoke Lambda function every 2nd minute from Mon-Fri
-      - schedule: cron(0/2 * ? * MON-FRI *)
+      # Invoke Lambda function on every 12 PM
+      - schedule:
+          name: steth-tracker-schedule
+          description: 'Schedule to run tracker for stETH rebalancing'
+          # steth rebalancing happens at 07.00 UTC time
+          rate: cron(0 12 * * * *)
+      - schedule:
+          name: steth-tracker-schedule-offline
+          enabled: false
+          description: 'Schedule when running tracker locally'
+          rate: cron(0/5 * * * * *)
+
+plugins:
+  - serverless-dotenv-plugin
+  - serverless-offline-schedule
