@@ -9,6 +9,8 @@
     "serverless-offline-schedule": "^1.0.4"
   },
   "dependencies": {
-    "axios": "^0.21.1"
+    "axios": "^0.21.1",
+    "envalid": "^7.1.1",
+    "serialize-error": "^8.1.0"
   }
 }
