@@ -12,8 +12,19 @@
     "serverless",
     "aws"
   ],
+  "engines": {
+    "node": ">=12"
+  },
   "author": "",
   "license": "ISC",
-  "devDependencies": {},
-  "dependencies": {}
+  "devDependencies": {
+    "lint-staged": "^11.1.2",
+    "modern-node": "^2.9.0",
+    "prettier-standard": "^16.4.1",
+    "trim": "^1.0.1"
+  },
+  "dependencies": {},
+  "lint-staged": {
+    "*.js": ["prettier-standard --lint"]
+  }
 }
