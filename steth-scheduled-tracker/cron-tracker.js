@@ -51,7 +51,7 @@ function addRebaseToFile(rebaseAmount, rebaseFile) {
   );
   fs.appendFileSync(
     rebaseFile,
-    `\n${rebaseToAppend}`
+    `${rebaseToAppend}\n`
   );
 }
 
