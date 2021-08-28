@@ -4,6 +4,7 @@
   "description": "Simple serverless application to track stETH rebalancing",
   "main": "index.js",
   "scripts": {
+    "prepare": "husky install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -18,13 +19,14 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "husky": "^7.0.2",
     "lint-staged": "^11.1.2",
     "modern-node": "^2.9.0",
-    "prettier-standard": "^16.4.1",
-    "trim": "^1.0.1"
+    "prettier-standard": "^16.4.1"
   },
-  "dependencies": {},
   "lint-staged": {
-    "*.js": ["prettier-standard --lint"]
+    "*.js": [
+      "prettier-standard --lint"
+    ]
   }
 }
