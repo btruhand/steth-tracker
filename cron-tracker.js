@@ -3,15 +3,11 @@ const { cleanEnv, str, makeValidator } = require('envalid')
 const fs = require('fs')
 const { serializeError } = require('serialize-error')
 const { execSync } = require('child_process')
+const path = require('path')
 
-const file = makeValidator(filePath => {
-  try {
-    fs.accessSync(filePath, fs.constants.R_OK)
-  } catch (err) {
-    throw new Error(`supplied file ${filePath} is not readable`)
-  }
-  return filePath
-})
+const file = makeValidator(filePath => path.normalize(filePath))
+
+class BalanceFileNotFound extends Error {}
 
 function getValidatedEnvironment () {
   return cleanEnv(process.env, {
@@ -30,6 +26,7 @@ function getValidatedEnvironment () {
 }
 
 function readBalanceFromFile (balanceFile) {
+  if (!fs.existsSync(balanceFile)) throw new BalanceFileNotFound()
   const balance = fs.readFileSync(balanceFile).toString()
   return BigInt(balance.trim())
 }
@@ -65,6 +62,10 @@ function addRebaseToFile (rebaseAmount, rebaseFile) {
   fs.appendFileSync(rebaseFile, `${rebaseToAppend}\n`)
 }
 
+/**
+ * @param {fs.PathOrFileDescriptor} balanceFile
+ * @param {*} newBalance
+ */
 function updateBalanceFile (balanceFile, newBalance) {
   fs.writeFileSync(balanceFile, `${newBalance}\n`)
 }
@@ -73,7 +74,7 @@ function updateBalanceFile (balanceFile, newBalance) {
  * @param {{
  *  total_balance?: String,
  *  rebase_amount?: String,
- *  error?: String
+ *  error?: any
  * }} results
  * @param {string} subject
  * @param {to} subject
@@ -87,7 +88,7 @@ function mail (results, subject, to) {
       results.rebase_amount !== undefined ? results.rebase_amount : 'N/A'
     }
     Date: ${new Date()}
-    Error: ${results.error ? results.error : 'N/A'}
+    Error: ${results.error ? results.error.stack : 'N/A'}
   `
   execSync(`echo "${mailContent}" | mail -s "${subject}" ${to}`)
 }
@@ -105,16 +106,11 @@ async function main () {
     env.ETH_ADDRESS,
     env.ETHERSCAN_API_KEY
   )
-  const previousBalance = readBalanceFromFile(env.BALANCE_FILE)
-  /**
-   * @type {BigInt}
-   */
-  const rebaseAmount = currentBalance - previousBalance
-  updateBalanceFile(env.BALANCE_FILE, currentBalance)
-  addRebaseToFile(rebaseAmount, env.REBASING_TRACKING_FILE)
-  return {
-    total_balance: formatErc20TokenValue(currentBalance),
-    rebase_amount: formatErc20TokenValue(rebaseAmount)
+  try {
+    return performRebaseUpdate(currentBalance)
+  } catch (err) {
+    if (!(err instanceof BalanceFileNotFound)) throw err
+    return makeNewRebaseRecord(currentBalance)
   }
 }
 
@@ -131,3 +127,26 @@ main()
       env.EMAIL_ADDRESS
     )
   )
+function makeNewRebaseRecord (currentBalance) {
+  // let's assume that both balance and rebase file can be created
+  fs.closeSync(fs.openSync(env.REBASING_TRACKING_FILE, 'w'))
+  const newBalanceFile = fs.openSync(env.BALANCE_FILE, 'w')
+  updateBalanceFile(newBalanceFile, currentBalance)
+  fs.closeSync(newBalanceFile)
+
+  return { total_balance: formatErc20TokenValue(currentBalance) }
+}
+
+function performRebaseUpdate (currentBalance) {
+  const previousBalance = readBalanceFromFile(env.BALANCE_FILE)
+  /**
+   * @type {BigInt}
+   */
+  const rebaseAmount = currentBalance - previousBalance
+  updateBalanceFile(env.BALANCE_FILE, currentBalance)
+  addRebaseToFile(rebaseAmount, env.REBASING_TRACKING_FILE)
+  return {
+    total_balance: formatErc20TokenValue(currentBalance),
+    rebase_amount: formatErc20TokenValue(rebaseAmount)
+  }
+}
